@@ -14,7 +14,7 @@ build/
 *.jwk
 .DS_Store
 Thumbs.db
-qianji_remote.db
+jizhang_remote.db
 testegs/emulator_current.png
 testegs/drawer.png
 testegs/screen*.png
@@ -22,3 +22,4 @@ testegs/ui*.xml
 testegs/*result*.png
 skills-lock.json
 .claude/
+.env

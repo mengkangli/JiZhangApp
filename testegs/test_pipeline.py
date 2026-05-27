@@ -1,7 +1,24 @@
-import json, urllib.request, sys, io
+import json, urllib.request, sys, io, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-api_key = "YOUR_DEEPSEEK_API_KEY"
+def load_env(path=None):
+    """Load .env file into os.environ."""
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                key, _, val = line.partition('=')
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+load_env()
+
+api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+if not api_key:
+    raise RuntimeError("DEEPSEEK_API_KEY not set in .env file")
 text = "美团支付\n商家: 美团\n付款金额: 16.47元\n支付方式: 招商银行信用卡\n交易时间: 2026-05-27 00:20:43"
 
 prompt = f"""从以下账单文字中提取记账信息，返回JSON：

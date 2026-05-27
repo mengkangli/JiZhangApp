@@ -4,11 +4,28 @@ On a real phone, Step 1 (OCR) is done by google_mlkit_text_recognition.
 Here we use the known text extracted from the receipt image.
 """
 
-import json, urllib.request, uuid, sys, io
+import json, urllib.request, uuid, sys, io, os
 from datetime import datetime
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-API_KEY = "YOUR_DEEPSEEK_API_KEY"
+def load_env(path=None):
+    """Load .env file into os.environ."""
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                key, _, val = line.partition('=')
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+load_env()
+
+API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+if not API_KEY:
+    raise RuntimeError("DEEPSEEK_API_KEY not set in .env file")
 IMAGE_PATH = r"C:\Users\mengk\Desktop\qianjirepro\testegs\meituanpay.jpg"
 
 # ═══════════════════════════════════════════════
