@@ -8,7 +8,7 @@ import json, urllib.request, uuid, sys, io
 from datetime import datetime
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-API_KEY = "sk-31d1a5a8b77e4494a7a24dd6a6535533"
+API_KEY = "YOUR_DEEPSEEK_API_KEY"
 IMAGE_PATH = r"C:\Users\mengk\Desktop\qianjirepro\testegs\meituanpay.jpg"
 
 # ═══════════════════════════════════════════════

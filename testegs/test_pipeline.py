@@ -1,7 +1,7 @@
 import json, urllib.request, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-api_key = "sk-31d1a5a8b77e4494a7a24dd6a6535533"
+api_key = "YOUR_DEEPSEEK_API_KEY"
 text = "美团支付\n商家: 美团\n付款金额: 16.47元\n支付方式: 招商银行信用卡\n交易时间: 2026-05-27 00:20:43"
 
 prompt = f"""从以下账单文字中提取记账信息，返回JSON：
