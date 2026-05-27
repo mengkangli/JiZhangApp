@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Inject Transaction</title></head>
+<body>
+<h2>钱记 - 写入AI记账记录</h2>
+<p id="status">正在写入...</p>
+<button onclick="inject()">写入交易记录</button>
+<p>写入后，<a href="/">打开钱记App</a> 查看记账结果</p>
+
+<script>
+async function inject() {
+    const key = 'flutter.db_transactions';
+
+    // The AI-identified transaction
+    const newTx = {
+        "id": "ai-meituan-20260527-001",
+        "amount": 16.47,
+        "type": "expense",
+        "category_id": "ec001",
+        "date": "2026-05-27",
+        "note": "美团支付",
+        "created_at": "2026-05-27T11:13:02",
+        "updated_at": "2026-05-27T11:13:02"
+    };
+
+    // Read existing transactions from localStorage
+    let existing = [];
+    const raw = localStorage.getItem('flutter.db_transactions');
+    if (raw) {
+        try { existing = JSON.parse(raw); } catch(e) {}
+    }
+
+    // Add new transaction
+    existing.push(newTx);
+
+    // Save back
+    localStorage.setItem('flutter.db_transactions', JSON.stringify(existing));
+
+    document.getElementById('status').textContent =
+        `✅ 已写入！金额: ¥${newTx.amount}, 分类: 餐饮, 备注: ${newTx.note}`;
+    document.getElementById('status').style.color = 'green';
+}
+
+// Auto-inject on load
+inject();
+</script>
+</body></html>

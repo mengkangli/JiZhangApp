@@ -1,0 +1,21 @@
+==================================================
+  Step 1: OCR (mlkit on device)
+==================================================
+  | 美团支付
+  | 商家: 美团
+  | 付款金额: 16.47元
+  | 支付方式: 招商银行信用卡
+  | 交易时间: 2026-05-27 00:20:43
+
+==================================================
+  Step 2: DeepSeek → JSON
+==================================================
+  模型:   deepseek-v4-flash
+  Tokens: 186
+
+  ┌─ 记账结果 ────────────────────
+Traceback (most recent call last):
+  File "C:\Users\mengk\Desktop\qianjirepro\testegs\test_pipeline.py", line 56, in <module>
+    print(f"  │  金额:  \xa5{parsed['amount']}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'gbk' codec can't encode character '\xa5' in position 10: illegal multibyte sequence

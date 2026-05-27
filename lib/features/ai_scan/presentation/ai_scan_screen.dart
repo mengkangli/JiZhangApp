@@ -1,0 +1,592 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../transaction/domain/transaction.dart';
+import '../../transaction/domain/transaction_repository.dart';
+import '../../category/domain/category_repository.dart';
+import '../data/ai_scan_service.dart';
+
+class AiScanScreen extends StatefulWidget {
+  const AiScanScreen({super.key});
+
+  @override
+  State<AiScanScreen> createState() => _AiScanScreenState();
+}
+
+class _AiScanScreenState extends State<AiScanScreen> {
+  final _apiKeyController = TextEditingController();
+  final _manualTextController = TextEditingController();
+  Uint8List? _imageBytes;
+  String? _imagePath;
+  AiScanResult? _scanResult;
+  AiScanPipelineStep? _currentStep;
+  bool _saving = false;
+  String? _error;
+  String _ocrText = '';
+  bool _useManualText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadApiKey();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSharedImage());
+  }
+
+  void _loadSharedImage() {
+    final extra = GoRouterState.of(context).extra;
+    if (extra is String && extra.isNotEmpty) {
+      _pickSharedImage(extra);
+    }
+  }
+
+  Future<void> _pickSharedImage(String filePath) async {
+    final file = File(filePath);
+    if (!await file.exists()) return;
+    final bytes = await file.readAsBytes();
+    if (mounted) {
+      setState(() {
+        _imageBytes = bytes;
+        _imagePath = filePath;
+        _scanResult = null;
+        _error = null;
+        _ocrText = '';
+        _useManualText = false;
+      });
+      await _runPipeline(bytes, filePath);
+    }
+  }
+
+  Future<void> _loadApiKey() async {
+    final key = await AiScanService.instance.getSavedApiKey();
+    if (key != null && key.isNotEmpty && mounted) {
+      _apiKeyController.text = key;
+    }
+  }
+
+  @override
+  void dispose() {
+    _apiKeyController.dispose();
+    _manualTextController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 2048,
+        maxHeight: 2048,
+        imageQuality: 90,
+      );
+      if (picked != null && mounted) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+          _imagePath = picked.path;
+          _scanResult = null;
+          _error = null;
+          _ocrText = '';
+          _useManualText = false;
+        });
+        await _runPipeline(bytes, picked.path);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = '无法获取图片: $e');
+    }
+  }
+
+  Future<void> _runPipeline(Uint8List bytes, String filePath) async {
+    setState(() {
+      _currentStep = AiScanPipelineStep.recognizing;
+      _error = null;
+      _scanResult = null;
+      _ocrText = '';
+    });
+
+    // Phase 1: OCR (no API key needed)
+    String ocrText;
+    try {
+      ocrText = await AiScanService.instance.recognizeText(
+        bytes: bytes,
+        filePath: filePath,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'OCR 识别失败: $e。请手动输入账单文字';
+        _currentStep = null;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+
+    if (ocrText.isEmpty) {
+      setState(() {
+        _error = 'OCR 未能识别文字，请手动输入账单文字后点击解析';
+        _currentStep = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _ocrText = ocrText;
+    });
+
+    // Phase 2: DeepSeek (needs API key)
+    final apiKey = _apiKeyController.text.trim();
+    if (apiKey.isEmpty) {
+      setState(() {
+        _error = 'OCR 完成！请先输入 DeepSeek API Key 后点击解析';
+        _currentStep = null;
+      });
+      return;
+    }
+
+    setState(() => _currentStep = AiScanPipelineStep.parsing);
+
+    try {
+      final result = await AiScanService.instance.parseText(
+        text: ocrText,
+        apiKey: apiKey,
+      );
+      if (!mounted) return;
+
+      AiScanService.instance.saveApiKey(apiKey);
+
+      setState(() {
+        _scanResult = result;
+        _currentStep = null;
+      });
+
+      if (result.amount <= 0) {
+        setState(() => _error = '未能从文字中识别出有效金额，请检查后重试');
+      }
+    } on AiScanException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _currentStep = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '解析失败，请检查网络后重试';
+        _currentStep = null;
+      });
+    }
+  }
+
+  Future<void> _manualParse() async {
+    final text = _manualTextController.text.trim();
+    if (text.isEmpty) {
+      setState(() => _error = '请输入账单文字');
+      return;
+    }
+    final apiKey = _apiKeyController.text.trim();
+    if (apiKey.isEmpty) {
+      setState(() => _error = '请先输入 DeepSeek API Key');
+      return;
+    }
+
+    setState(() {
+      _currentStep = AiScanPipelineStep.parsing;
+      _error = null;
+      _scanResult = null;
+    });
+
+    try {
+      final result = await AiScanService.instance.parseText(
+        text: text,
+        apiKey: apiKey,
+      );
+      if (!mounted) return;
+
+      AiScanService.instance.saveApiKey(apiKey);
+
+      if (result.amount <= 0) {
+        setState(() {
+          _error = '未能从文字中识别出有效金额，请检查后重试';
+          _currentStep = null;
+        });
+        return;
+      }
+      setState(() {
+        _scanResult = result;
+        _ocrText = text;
+        _currentStep = null;
+      });
+    } on AiScanException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _currentStep = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = '解析失败，请检查网络后重试';
+        _currentStep = null;
+      });
+    }
+  }
+
+  Future<void> _save() async {
+    if (_scanResult == null) return;
+    setState(() => _saving = true);
+
+    try {
+      final categories = await CategoryRepository().getByType(_scanResult!.type);
+      String? categoryId;
+
+      if (categories.isNotEmpty) {
+        final matched = categories
+            .where((c) => c.name == _scanResult!.categoryName)
+            .firstOrNull;
+        categoryId = matched?.id ?? categories.first.id;
+      }
+
+      if (categoryId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('请先在设置中添加分类')),
+          );
+          setState(() => _saving = false);
+        }
+        return;
+      }
+
+      final now = DateTime.now();
+      final tx = Transaction(
+        id: const Uuid().v4(),
+        amount: _scanResult!.amount,
+        type: _scanResult!.type,
+        categoryId: categoryId,
+        date: _scanResult!.date ?? now,
+        note: _scanResult!.note,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      await TransactionRepository().insert(tx);
+      AiScanService.instance.saveApiKey(_apiKeyController.text.trim());
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('智能记账')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('DeepSeek API Key', style: Theme.of(context).textTheme.titleMedium),
+            AppSpacing.gapSm,
+            TextField(
+              controller: _apiKeyController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: 'sk-...',
+                helperText: '仅本地调用 DeepSeek 解析文字',
+                helperStyle:
+                    TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11),
+              ),
+            ),
+            AppSpacing.gapXl,
+
+            // Image area
+            if (_imageBytes == null) _buildImagePicker(colorScheme),
+            if (_imageBytes != null) _buildImagePreview(colorScheme),
+
+            // OCR progress
+            if (_currentStep == AiScanPipelineStep.recognizing) ...[
+              AppSpacing.gapMd,
+              const Center(
+                child: Column(children: [
+                  SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                  SizedBox(height: 8),
+                  Text('OCR 识别文字中...', style: TextStyle(fontSize: 13)),
+                ]),
+              ),
+            ],
+
+            // OCR text display
+            if (_ocrText.isNotEmpty &&
+                _currentStep != AiScanPipelineStep.recognizing) ...[
+              AppSpacing.gapMd,
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.incomeBg,
+                  borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.text_snippet, size: 16, color: AppColors.income),
+                      AppSpacing.gapXs,
+                      Text('OCR 识别文字',
+                          style: TextStyle(
+                              color: AppColors.income,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600)),
+                    ]),
+                    AppSpacing.gapXs,
+                    Text(_ocrText,
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
+
+            // Manual text input
+            if ((_ocrText.isEmpty &&
+                    _currentStep != AiScanPipelineStep.recognizing &&
+                    _imageBytes != null) ||
+                _useManualText ||
+                _imageBytes == null) ...[
+              AppSpacing.gapMd,
+              TextField(
+                controller: _manualTextController,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: '输入账单上的文字内容...\n如：美团支付 付款金额 ¥24.61 2026-05-25',
+                ),
+              ),
+              AppSpacing.gapSm,
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.tonal(
+                  onPressed: _manualParse,
+                  child: const Text('解析文字'),
+                ),
+              ),
+            ],
+
+            // Manual toggle
+            if (_ocrText.isNotEmpty &&
+                _currentStep == null &&
+                !_useManualText &&
+                _scanResult == null) ...[
+              AppSpacing.gapSm,
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => setState(() => _useManualText = true),
+                  child: const Text('OCR 不对？点此手动输入'),
+                ),
+              ),
+            ],
+
+            // AI parsing progress
+            if (_currentStep == AiScanPipelineStep.parsing) ...[
+              AppSpacing.gapXl,
+              const Center(
+                child: Column(children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 12),
+                  Text('AI 正在解析...'),
+                ]),
+              ),
+            ],
+
+            // Error
+            if (_error != null && _currentStep != AiScanPipelineStep.parsing) ...[
+              AppSpacing.gapMd,
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.expenseBg,
+                  borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.error_outline, color: AppColors.expense, size: 20),
+                  AppSpacing.gapSm,
+                  Expanded(
+                      child: Text(_error!, style: const TextStyle(color: AppColors.expense))),
+                ]),
+              ),
+            ],
+
+            // Result card
+            if (_scanResult != null && _currentStep == null) ...[
+              AppSpacing.gapXl,
+              _buildResultCard(colorScheme),
+              AppSpacing.gapXl,
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _saving ? null : _save,
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('确认记账'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(ColorScheme colorScheme) {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: colorScheme.outlineVariant, width: 1.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.receipt_long_rounded,
+              size: 48, color: colorScheme.primary.withValues(alpha: 0.4)),
+          AppSpacing.gapMd,
+          Text('拍照或选择图片', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          AppSpacing.gapLg,
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Flexible(
+              child: FilledButton.icon(
+                onPressed: () => _pickImage(ImageSource.camera),
+                icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                label: const Text('拍照'),
+              ),
+            ),
+            AppSpacing.gapMd,
+            Flexible(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_rounded, size: 18),
+                label: const Text('相册'),
+              ),
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(ColorScheme colorScheme) {
+    return Column(children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        child: _imagePath != null
+            ? Image.file(File(_imagePath!),
+                height: 200, width: double.infinity, fit: BoxFit.cover)
+            : Image.memory(_imageBytes!,
+                height: 200, width: double.infinity, fit: BoxFit.cover),
+      ),
+      AppSpacing.gapSm,
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        TextButton.icon(
+            onPressed: () => _pickImage(ImageSource.camera),
+            icon: const Icon(Icons.camera_alt_rounded, size: 16),
+            label: const Text('重拍')),
+        TextButton.icon(
+            onPressed: () => _pickImage(ImageSource.gallery),
+            icon: const Icon(Icons.photo_library_rounded, size: 16),
+            label: const Text('重选')),
+        if (_ocrText.isNotEmpty && _currentStep == null && _scanResult == null)
+          TextButton.icon(
+              onPressed: () => _runPipeline(_imageBytes!, _imagePath!),
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('解析')),
+      ]),
+    ]);
+  }
+
+  Widget _buildResultCard(ColorScheme colorScheme) {
+    final result = _scanResult!;
+    final isIncome = result.type == 'income';
+    final accent = isIncome ? AppColors.income : AppColors.expense;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: accent.withValues(alpha: 0.3), width: 2),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(
+              isIncome
+                  ? Icons.arrow_downward_rounded
+                  : Icons.arrow_upward_rounded,
+              color: accent,
+              size: 20),
+          AppSpacing.gapSm,
+          Text(isIncome ? '识别为收入' : '识别为支出',
+              style: TextStyle(color: accent, fontWeight: FontWeight.w600)),
+          const Spacer(),
+          if (result.date != null)
+            Text(DateFormat('MM月dd日').format(result.date!),
+                style: Theme.of(context).textTheme.bodyMedium),
+        ]),
+        AppSpacing.gapLg,
+        Center(
+          child: Text('¥${result.amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                  letterSpacing: -0.5)),
+        ),
+        AppSpacing.gapLg,
+        Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
+          _chip(Icons.category_outlined, result.categoryName ?? '未识别'),
+          _chip(Icons.note_outlined, result.note ?? '无备注'),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _chip(IconData icon, String text) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppSpacing.chipRadius)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 14, color: cs.onSurfaceVariant),
+        AppSpacing.gapXs,
+        Text(text, style: Theme.of(context).textTheme.bodyMedium),
+      ]),
+    );
+  }
+}
