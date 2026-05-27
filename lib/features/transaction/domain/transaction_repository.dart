@@ -40,6 +40,23 @@ class TransactionRepository {
     return (result.first['total'] as num?)?.toDouble() ?? 0.0;
   }
 
+  Future<Map<String, double>> sumExpenseByCategories(int year, int month) async {
+    final startDate = '$year-${month.toString().padLeft(2, '0')}-01';
+    final lastDay = DateTime(year, month + 1, 0).day;
+    final endDate = '$year-${month.toString().padLeft(2, '0')}-$lastDay';
+
+    final result = await _db.rawQuery(
+      'SELECT category_id, SUM(amount) as total FROM ${DatabaseConstants.tableTransactions} '
+      'WHERE type = ? AND date >= ? AND date <= ? GROUP BY category_id',
+      ['expense', startDate, endDate],
+    );
+    final map = <String, double>{};
+    for (final row in result) {
+      map[row['category_id'] as String] = (row['total'] as num).toDouble();
+    }
+    return map;
+  }
+
   Future<double> sumByCategory(String categoryId, int year, int month, String type) async {
     final startDate = '$year-${month.toString().padLeft(2, '0')}-01';
     final lastDay = DateTime(year, month + 1, 0).day;

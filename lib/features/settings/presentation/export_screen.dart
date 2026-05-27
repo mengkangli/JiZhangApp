@@ -177,7 +177,7 @@ class _ExportScreenState extends State<ExportScreen> {
 
       final dir = await getTemporaryDirectory();
       final timeStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final file = File('${dir.path}/qianji_export_$timeStr.csv');
+      final file = File('${dir.path}/jizhang_export_$timeStr.csv');
       await file.writeAsString(csv);
 
       try {

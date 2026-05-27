@@ -1,6 +1,6 @@
-# qianjirepro
+# JiZhang
 
-A new Flutter project.
+A personal finance tracking app built with Flutter.
 
 ## Getting Started
 

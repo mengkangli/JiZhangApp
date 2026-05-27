@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import '../router/app_router.dart';
 
 class ShareHandler {
-  static const _channel = MethodChannel('com.qianji/share');
+  static const _channel = MethodChannel('com.jizhang.app/share');
 
   static void init() {
     _channel.setMethodCallHandler((call) async {

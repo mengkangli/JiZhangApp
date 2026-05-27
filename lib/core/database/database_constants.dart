@@ -1,7 +1,7 @@
 class DatabaseConstants {
   DatabaseConstants._();
 
-  static const String databaseName = 'qianji.db';
+  static const String databaseName = 'jizhang.db';
   static const int databaseVersion = 4;
 
   static const String tableCategories = 'categories';

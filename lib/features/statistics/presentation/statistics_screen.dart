@@ -17,14 +17,12 @@ final categoryBreakdownProvider =
   final cats = await CategoryRepository().getByType('expense');
   final txRepo = TransactionRepository();
 
+  // Single GROUP BY query instead of per-category queries
+  final sumsByCat = await txRepo.sumExpenseByCategories(month.year, month.month);
+
   final breakdowns = <CategoryBreakdown>[];
   for (final cat in cats) {
-    final sum = await txRepo.sumByCategory(
-      cat.id,
-      month.year,
-      month.month,
-      'expense',
-    );
+    final sum = sumsByCat[cat.id] ?? 0;
     if (sum > 0) {
       breakdowns.add(CategoryBreakdown(
         categoryName: cat.name,

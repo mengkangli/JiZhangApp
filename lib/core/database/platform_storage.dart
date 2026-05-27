@@ -14,7 +14,7 @@ class PlatformStorage {
   static Future<void> init() async {
     if (!kIsWeb) {
       final dbPath = await getDatabasesPath();
-      final path = join(dbPath, 'qianji_store.db');
+      final path = join(dbPath, 'jizhang_store.db');
       final db = await openDatabase(
         path,
         version: 1,

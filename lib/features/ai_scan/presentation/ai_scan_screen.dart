@@ -130,6 +130,9 @@ class _AiScanScreenState extends State<AiScanScreen> {
 
     if (!mounted) return;
 
+    // Release raw image bytes — OCR is done and we only need the file path now
+    _imageBytes = null;
+
     if (ocrText.isEmpty) {
       setState(() {
         _error = 'OCR 未能识别文字，请手动输入账单文字后点击解析';
@@ -503,11 +506,11 @@ class _AiScanScreenState extends State<AiScanScreen> {
     return Column(children: [
       ClipRRect(
         borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        child: _imagePath != null
-            ? Image.file(File(_imagePath!),
-                height: 200, width: double.infinity, fit: BoxFit.cover)
-            : Image.memory(_imageBytes!,
-                height: 200, width: double.infinity, fit: BoxFit.cover),
+        child: Image.file(
+            File(_imagePath!),
+            height: 200, width: double.infinity, fit: BoxFit.cover,
+            cacheWidth: 512, cacheHeight: 512,
+          ),
       ),
       AppSpacing.gapSm,
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
