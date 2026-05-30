@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/illustrations.dart';
 import '../domain/bill.dart';
 import '../domain/bill_repository.dart';
 import 'add_bill_screen.dart';
@@ -27,7 +28,7 @@ class BillListScreen extends ConsumerWidget {
         data: (bills) {
           if (bills.isEmpty) {
             return EmptyState(
-              icon: Icons.description_outlined,
+              illustration: EmptyIllustration.noFunds,
               title: '暂无账单',
               subtitle: '添加定期账单，不再忘记缴费',
               actionLabel: '添加账单',

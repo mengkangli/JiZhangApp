@@ -35,3 +35,7 @@ class AppSpacing {
   static const double chipRadius = 8;
   static const double inputRadius = 12;
 }
+
+/// Note: prefer [AppRadius] for new code. The four `*Radius` doubles above
+/// are kept for backward compatibility with existing call sites and will
+/// be migrated incrementally.
