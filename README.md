@@ -1,4 +1,7 @@
-# JiZhang
+# Apurse
+
+<img width="3738" height="874" alt="streamer" src="https://github.com/user-attachments/assets/d07b76f3-7303-4579-834a-40a52a8b94f7" />
+
 
 A personal finance tracking app built with Flutter.
 
