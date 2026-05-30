@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/dashboard/presentation/dashboard_screen.dart';
@@ -15,9 +16,11 @@ import '../../features/budget/presentation/add_budget_screen.dart';
 import '../../features/bill/presentation/add_bill_screen.dart';
 import '../../features/ai_scan/presentation/ai_scan_screen.dart';
 import '../../features/account/presentation/account_list_screen.dart';
-import '../../features/user/data/user_service.dart';
-import '../../features/user/presentation/edit_profile_screen.dart';
-import 'scaffold_key.dart';
+import '../../features/profile/presentation/profile_screen.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_radius.dart';
+import '../constants/app_spacing.dart';
+import '../theme/app_typography.dart';
 
 part 'route_names.dart';
 
@@ -50,20 +53,27 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/budgets',
-              builder: (context, state) => const BudgetListScreen(),
+              path: '/statistics',
+              builder: (context, state) => const StatisticsScreen(),
             ),
           ],
         ),
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/accounts',
-              builder: (context, state) => const AccountListScreen(),
+              path: '/profile',
+              builder: (context, state) => const ProfileScreen(),
             ),
           ],
         ),
       ],
+    ),
+
+    // ── Push routes (above the shell) ────────────────────────────
+    GoRoute(
+      path: '/transaction/add',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddTransactionScreen(),
     ),
     GoRoute(
       path: '/ai-scan',
@@ -71,19 +81,14 @@ final appRouter = GoRouter(
       builder: (context, state) => const AiScanScreen(),
     ),
     GoRoute(
-      path: '/transaction/add',
+      path: '/budgets',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AddTransactionScreen(),
+      builder: (context, state) => const BudgetListScreen(),
     ),
     GoRoute(
-      path: '/statistics',
+      path: '/budget/add',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const StatisticsScreen(),
-    ),
-    GoRoute(
-      path: '/transactions',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const TransactionListScreen(),
+      builder: (context, state) => const AddBudgetScreen(),
     ),
     GoRoute(
       path: '/bills',
@@ -96,6 +101,11 @@ final appRouter = GoRouter(
       builder: (context, state) => const AddBillScreen(),
     ),
     GoRoute(
+      path: '/accounts',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AccountListScreen(),
+    ),
+    GoRoute(
       path: '/category/manage',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const CategoryManagementScreen(),
@@ -104,11 +114,6 @@ final appRouter = GoRouter(
       path: '/category/add',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AddCategoryScreen(),
-    ),
-    GoRoute(
-      path: '/budget/add',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AddBudgetScreen(),
     ),
     GoRoute(
       path: '/settings',
@@ -123,191 +128,338 @@ final appRouter = GoRouter(
   ],
 );
 
-class MainShell extends StatefulWidget {
+/// Top-level shell that hosts the 4 main tabs and the docked center FAB.
+///
+/// The FAB's primary action is "记一笔" (manual add) — single tap goes
+/// straight to the add-transaction screen because that's what users want
+/// 95% of the time. Long-press opens a sheet for AI scan / future voice
+/// input — the secondary entry points that would otherwise compete for
+/// the same surface.
+class MainShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
-
   const MainShell({super.key, required this.navigationShell});
 
-  @override
-  State<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends State<MainShell> {
-  UserProfile _profile = UserProfile();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfile();
+  void _quickAdd(BuildContext context) {
+    HapticFeedback.lightImpact();
+    context.push('/transaction/add');
   }
 
-  Future<void> _loadProfile() async {
-    final p = await UserService.load();
-    if (mounted) setState(() => _profile = p);
-  }
-
-  Future<void> _editProfile() async {
-    Navigator.of(context).pop();
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => EditProfileScreen(profile: _profile)),
+  Future<void> _showQuickAddMenu(BuildContext context) async {
+    HapticFeedback.mediumImpact();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => _QuickAddSheet(
+        onManual: () {
+          Navigator.of(sheetCtx).pop();
+          context.push('/transaction/add');
+        },
+        onAiScan: () {
+          Navigator.of(sheetCtx).pop();
+          context.push('/ai-scan');
+        },
+      ),
     );
-    if (result == true) _loadProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      key: shellScaffoldKey,
-      body: widget.navigationShell,
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: colorScheme.primaryContainer),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(_profile.avatar, style: const TextStyle(fontSize: 40)),
-                  const SizedBox(height: 8),
-                  Text(_profile.name,
-                      style: Theme.of(context).textTheme.titleLarge),
-                  if (_profile.monthlyBudget > 0)
-                    Text('月预算: ¥${_profile.monthlyBudget.toStringAsFixed(0)}',
-                        style: TextStyle(
-                            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7))),
-                ],
-              ),
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.home_rounded,
-              label: '首页',
-              index: 0,
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.bar_chart_rounded,
-              label: '统计',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/statistics');
-              },
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.description_rounded,
-              label: '提醒',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/bills');
-              },
-            ),
-            const Divider(),
-            _drawerItem(
-              context,
-              icon: Icons.person_rounded,
-              label: '编辑资料',
-              onTap: _editProfile,
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.category_rounded,
-              label: '分类管理',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/category/manage');
-              },
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.settings_rounded,
-              label: '设置',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/settings');
-              },
-            ),
-            _drawerItem(
-              context,
-              icon: Icons.ios_share_rounded,
-              label: '数据导出',
-              onTap: () {
-                Navigator.of(context).pop();
-                context.push('/settings/export');
-              },
-            ),
-          ],
-        ),
+      body: navigationShell,
+      // Center FAB docked into the bottom bar's notch — Material standard
+      // pattern. The bar is a 4-slot row split around the notch.
+      floatingActionButton: _CenterFab(
+        onTap: () => _quickAdd(context),
+        onLongPress: () => _showQuickAddMenu(context),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/ai-scan'),
-        tooltip: '智能记账',
-        child: const Icon(Icons.add_rounded),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: widget.navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          widget.navigationShell.goBranch(
-            index,
-            initialLocation: index == widget.navigationShell.currentIndex,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _BottomBar(
+        currentIndex: navigationShell.currentIndex,
+        onSelect: (branch) {
+          navigationShell.goBranch(
+            branch,
+            initialLocation: branch == navigationShell.currentIndex,
           );
         },
-        backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.primaryContainer,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+      ),
+    );
+  }
+}
+
+/// Bottom bar with a notch carved out for the centered FAB. Two tabs on
+/// each side; the middle "slot" is purely visual whitespace owned by the
+/// FAB itself.
+class _BottomBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onSelect;
+
+  const _BottomBar({required this.currentIndex, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return BottomAppBar(
+      color: cs.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 6,
+      elevation: 0,
+      padding: EdgeInsets.zero,
+      height: 64,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _NavItem(
+            branch: 0,
+            current: currentIndex,
+            onTap: onSelect,
+            iconOutlined: Icons.home_outlined,
+            iconFilled: Icons.home_rounded,
             label: '首页',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.swap_horiz_outlined),
-            selectedIcon: Icon(Icons.swap_horiz_rounded),
-            label: '账单',
+          _NavItem(
+            branch: 1,
+            current: currentIndex,
+            onTap: onSelect,
+            iconOutlined: Icons.receipt_long_outlined,
+            iconFilled: Icons.receipt_long_rounded,
+            label: '流水',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.savings_outlined),
-            selectedIcon: Icon(Icons.savings_rounded),
-            label: '预算',
+          // Notch gap — FAB occupies this slot.
+          const SizedBox(width: 64),
+          _NavItem(
+            branch: 2,
+            current: currentIndex,
+            onTap: onSelect,
+            iconOutlined: Icons.bar_chart_outlined,
+            iconFilled: Icons.bar_chart_rounded,
+            label: '统计',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
-            label: '账户',
+          _NavItem(
+            branch: 3,
+            current: currentIndex,
+            onTap: onSelect,
+            iconOutlined: Icons.person_outline_rounded,
+            iconFilled: Icons.person_rounded,
+            label: '我的',
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _drawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    int? index,
-    VoidCallback? onTap,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final shell = widget.navigationShell;
-    final selected = index != null && shell.currentIndex == index;
+class _NavItem extends StatelessWidget {
+  final int branch;
+  final int current;
+  final ValueChanged<int> onTap;
+  final IconData iconOutlined;
+  final IconData iconFilled;
+  final String label;
 
-    return ListTile(
-      leading: Icon(icon, color: selected ? colorScheme.primary : null),
-      title: Text(label,
-          style: selected
-              ? TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600)
-              : null),
-      selected: selected,
-      onTap: onTap ??
-          () {
-            shell.goBranch(index!);
-            Navigator.of(context).pop();
-          },
+  const _NavItem({
+    required this.branch,
+    required this.current,
+    required this.onTap,
+    required this.iconOutlined,
+    required this.iconFilled,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final selected = current == branch;
+    final color = selected ? cs.primary : cs.onSurfaceVariant;
+
+    return Expanded(
+      child: InkResponse(
+        onTap: () => onTap(branch),
+        radius: 36,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(selected ? iconFilled : iconOutlined,
+                size: 24, color: color),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: AppTypography.labelSmall.copyWith(
+                color: color,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CenterFab extends StatefulWidget {
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  const _CenterFab({required this.onTap, required this.onLongPress});
+
+  @override
+  State<_CenterFab> createState() => _CenterFabState();
+}
+
+class _CenterFabState extends State<_CenterFab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+    lowerBound: 0,
+    upperBound: 0.06,
+  );
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapCancel: () => _ctrl.reverse(),
+      onTapUp: (_) => _ctrl.reverse(),
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, child) {
+          final s = 1 - _ctrl.value;
+          return Transform.scale(scale: s, child: child);
+        },
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.primary,
+                Color.lerp(cs.primary, Colors.black, 0.10) ?? cs.primary,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withValues(alpha: AppColors.opacityAccentBorder),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Icon(Icons.add_rounded, color: cs.onPrimary, size: 32),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom-sheet shown on FAB long-press. Two big targets:
+/// "AI 扫描收据" and "手动记账" — covers the cases the FAB-tap default
+/// can't (camera shortcut, future voice input).
+class _QuickAddSheet extends StatelessWidget {
+  final VoidCallback onManual;
+  final VoidCallback onAiScan;
+
+  const _QuickAddSheet({required this.onManual, required this.onAiScan});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: AppRadius.allXl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _SheetAction(
+                icon: Icons.edit_note_rounded,
+                title: '手动记账',
+                subtitle: '自己输入金额、分类、备注',
+                onTap: onManual,
+              ),
+              Divider(
+                  height: 1,
+                  indent: AppSpacing.md,
+                  endIndent: AppSpacing.md,
+                  color: cs.outlineVariant),
+              _SheetAction(
+                icon: Icons.document_scanner_rounded,
+                title: 'AI 扫描收据',
+                subtitle: '拍照或选图，自动识别',
+                onTap: onAiScan,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetAction extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SheetAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.allLg,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: AppColors.opacityMuted),
+                borderRadius: AppRadius.allMd,
+              ),
+              child: Icon(icon, color: cs.primary),
+            ),
+            AppSpacing.gapMd,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.titleSmall),
+                  AppSpacing.gapXs,
+                  Text(subtitle,
+                      style: AppTypography.bodySmall
+                          .copyWith(color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

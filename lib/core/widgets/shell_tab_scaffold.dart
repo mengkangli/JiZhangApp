@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import '../router/scaffold_key.dart';
 
-/// Scaffold wrapper for shell tab pages.
-/// Automatically provides hamburger menu → drawer.
+/// Scaffold wrapper for shell tab pages — common AppBar styling, FAB slot,
+/// and consistent body padding hooks.
+///
+/// As of the navigation redesign, top-level tabs no longer host a drawer,
+/// so this widget simply standardises the AppBar across tabs and saves a
+/// bit of boilerplate. The bottom nav is owned by the parent shell.
 class ShellTabScaffold extends StatelessWidget {
   final Widget title;
   final List<Widget>? actions;
@@ -17,7 +20,7 @@ class ShellTabScaffold extends StatelessWidget {
     this.floatingActionButton,
   });
 
-  /// Convenience constructor with plain string title.
+  /// Convenience constructor with a plain string title.
   ShellTabScaffold.simple({
     super.key,
     required String title,
@@ -30,10 +33,9 @@ class ShellTabScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () => shellScaffoldKey.currentState?.openDrawer(),
-        ),
+        // Shell tabs are reached via the bottom bar — no drawer/back button
+        // on the root level.
+        automaticallyImplyLeading: false,
         title: title,
         actions: actions,
       ),

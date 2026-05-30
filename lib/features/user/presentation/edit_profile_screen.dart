@@ -12,7 +12,6 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _budgetController;
   late String _avatar;
   bool _saving = false;
 
@@ -20,31 +19,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
-    _budgetController = TextEditingController(
-        text: widget.profile.monthlyBudget > 0 ? widget.profile.monthlyBudget.toString() : '');
     _avatar = widget.profile.avatar;
   }
 
-  static const _avatars = ['👤', '😊', '🐱', '🐶', '🦊', '🐼', '🐨', '🐸', '🦄', '🐙', '🌸', '⭐', '💡', '🔥', '💎', '🎯'];
+  static const _avatars = [
+    '👤',
+    '😊',
+    '🐱',
+    '🐶',
+    '🦊',
+    '🐼',
+    '🐨',
+    '🐸',
+    '🦄',
+    '🐙',
+    '🌸',
+    '⭐',
+    '💡',
+    '🔥',
+    '💎',
+    '🎯'
+  ];
 
   @override
   void dispose() {
     _nameController.dispose();
-    _budgetController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('请输入名称')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('请输入名称')));
       return;
     }
     setState(() => _saving = true);
     await UserService.save(UserProfile(
       name: name,
       avatar: _avatar,
-      monthlyBudget: double.tryParse(_budgetController.text.trim()) ?? 0,
+      monthlyBudget: widget.profile.monthlyBudget,
     ));
     if (mounted) Navigator.of(context).pop(true);
   }
@@ -90,9 +104,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       color: selected ? colorScheme.primaryContainer : null,
                       borderRadius: BorderRadius.circular(8),
-                      border: selected ? Border.all(color: colorScheme.primary, width: 2) : null,
+                      border: selected
+                          ? Border.all(color: colorScheme.primary, width: 2)
+                          : null,
                     ),
-                    child: Center(child: Text(e, style: const TextStyle(fontSize: 20))),
+                    child: Center(
+                        child: Text(e, style: const TextStyle(fontSize: 20))),
                   ),
                 );
               }).toList(),
@@ -107,21 +124,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             AppSpacing.gapXl,
 
-            Text('月度预算（可选）', style: Theme.of(context).textTheme.titleMedium),
-            AppSpacing.gapSm,
-            TextField(
-              controller: _budgetController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(hintText: '0.00', prefixText: '¥ '),
-            ),
-            AppSpacing.gapXxl,
-
             SizedBox(
               height: 48,
               child: FilledButton(
                 onPressed: _saving ? null : _save,
                 child: _saving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Text('保存'),
               ),
             ),

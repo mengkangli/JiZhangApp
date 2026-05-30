@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/shell_tab_scaffold.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/widgets/app_icon_data.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../domain/account.dart';
 import '../domain/account_repository.dart';
@@ -28,14 +29,18 @@ class _AccountListScreenState extends State<AccountListScreen> {
     setState(() => _loading = true);
     try {
       final accounts = await AccountRepository().getAll();
-      if (mounted) setState(() { _accounts = accounts; _loading = false; });
+      if (mounted)
+        setState(() {
+          _accounts = accounts;
+          _loading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   Color _color(int colorValue) => Color(colorValue);
-  IconData _icon(int codePoint) => IconData(codePoint, fontFamily: 'MaterialIcons');
+  IconData _icon(int codePoint) => AppIconData.fromCodePoint(codePoint);
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +77,8 @@ class _AccountListScreenState extends State<AccountListScreen> {
                     return ListTile(
                       leading: CircleAvatar(
                         backgroundColor: accent.withValues(alpha: 0.15),
-                        child: Icon(_icon(account.iconCodePoint), color: accent, size: 22),
+                        child: Icon(_icon(account.iconCodePoint),
+                            color: accent, size: 22),
                       ),
                       title: Text(account.name),
                       subtitle: Text(account.typeLabel),

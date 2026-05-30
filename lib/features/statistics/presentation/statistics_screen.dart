@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/router/scaffold_key.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
@@ -8,17 +7,20 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../shared/providers/selected_month_provider.dart';
+import '../../../shared/providers/transaction_change_provider.dart';
 import '../../category/domain/category_repository.dart';
 import '../../transaction/domain/transaction_repository.dart';
 
 final categoryBreakdownProvider =
     FutureProvider<List<CategoryBreakdown>>((ref) async {
   final month = ref.watch(selectedMonthProvider);
+  ref.watch(transactionChangeProvider);
   final cats = await CategoryRepository().getByType('expense');
   final txRepo = TransactionRepository();
 
   // Single GROUP BY query instead of per-category queries
-  final sumsByCat = await txRepo.sumExpenseByCategories(month.year, month.month);
+  final sumsByCat =
+      await txRepo.sumExpenseByCategories(month.year, month.month);
 
   final breakdowns = <CategoryBreakdown>[];
   for (final cat in cats) {
@@ -44,7 +46,8 @@ final categoryBreakdownProvider =
 
 final dailyTrendProvider = FutureProvider<List<DailyTrend>>((ref) async {
   final month = ref.watch(selectedMonthProvider);
-  final db = await TransactionRepository();
+  ref.watch(transactionChangeProvider);
+  final db = TransactionRepository();
   final all = await db.getByMonth(month.year, month.month);
 
   final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
@@ -99,10 +102,10 @@ class StatisticsScreen extends ConsumerWidget {
     final month = ref.watch(selectedMonthProvider);
     final breakdownAsync = ref.watch(categoryBreakdownProvider);
     final trendAsync = ref.watch(dailyTrendProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           DateFormat('yyyy年M月', 'zh_CN').format(month),
         ),
@@ -183,8 +186,9 @@ class StatisticsScreen extends ConsumerWidget {
                           return PieChartSectionData(
                             color: Color(b.colorValue),
                             value: b.amount,
-                            title:
-                                b.percentage >= 5 ? '${b.percentage.toStringAsFixed(0)}%' : '',
+                            title: b.percentage >= 5
+                                ? '${b.percentage.toStringAsFixed(0)}%'
+                                : '',
                             titleStyle: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -291,7 +295,8 @@ class StatisticsScreen extends ConsumerWidget {
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
                     maxY: trends
-                            .map((t) => (t.expense > t.income ? t.expense : t.income))
+                            .map((t) =>
+                                (t.expense > t.income ? t.expense : t.income))
                             .reduce((a, b) => a > b ? a : b) *
                         1.2,
                     barGroups: trends.map((t) {

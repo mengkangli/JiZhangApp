@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
+import 'illustrations.dart';
 
+/// Reusable empty / "nothing here yet" state.
+///
+/// Two visual variants:
+/// - **Illustration** (preferred for first-time / discovery moments) —
+///   pass `illustration:` to render the hand-drawn `EmptyArtwork`.
+/// - **Icon** (compact, lower-effort fallback) — pass `icon:` for inline
+///   empties inside scrolling lists where a 120px painting would be too
+///   loud.
 class EmptyState extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final EmptyIllustration? illustration;
   final String title;
   final String subtitle;
   final String? actionLabel;
@@ -10,12 +21,14 @@ class EmptyState extends StatelessWidget {
 
   const EmptyState({
     super.key,
-    required this.icon,
+    this.icon,
+    this.illustration,
     required this.title,
     required this.subtitle,
     this.actionLabel,
     this.onAction,
-  });
+  }) : assert(icon != null || illustration != null,
+            'Provide either icon or illustration');
 
   @override
   Widget build(BuildContext context) {
@@ -27,19 +40,24 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                shape: BoxShape.circle,
+            if (illustration != null)
+              EmptyArtwork(kind: illustration!, size: 120)
+            else
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer
+                      .withValues(alpha: AppColors.opacityIllustrationBg),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon!,
+                  size: 36,
+                  color: colorScheme.primary
+                      .withValues(alpha: AppColors.opacityIllustrationFg),
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 36,
-                color: colorScheme.primary.withValues(alpha: 0.5),
-              ),
-            ),
             AppSpacing.gapXl,
             Text(
               title,

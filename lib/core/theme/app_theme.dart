@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_neutrals.dart';
+import '../constants/app_radius.dart';
 import '../constants/app_spacing.dart';
 import 'app_typography.dart';
 
@@ -17,13 +19,16 @@ class AppTheme {
       secondary: AppColors.secondary,
       onSecondary: AppColors.onSecondary,
       surface: AppColors.surface,
-      onSurface: AppColors.secondary,
-      onSurfaceVariant: const Color(0xFF49454F),
-      outline: const Color(0xFF79747E),
+      onSurface: AppNeutrals.n800,
+      onSurfaceVariant: AppNeutrals.n600,
+      outline: AppNeutrals.n300,
+      outlineVariant: AppNeutrals.n200,
       error: AppColors.expense,
       surfaceContainerLowest: AppColors.background,
       surfaceContainerLow: AppColors.surfaceVariant,
       surfaceContainer: AppColors.surface,
+      surfaceContainerHigh: AppNeutrals.n100,
+      shadow: AppNeutrals.n900,
     );
 
     return ThemeData(
@@ -37,9 +42,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allLg),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: AppBarTheme(
@@ -69,18 +72,14 @@ class AppTheme {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius + 4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allLg),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
           textStyle: AppTypography.titleMedium.copyWith(
             color: colorScheme.onPrimary,
           ),
@@ -94,20 +93,20 @@ class AppTheme {
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.surfaceContainerLow,
+        color: colorScheme.outlineVariant,
         thickness: 1,
         space: 0,
       ),
@@ -115,17 +114,11 @@ class AppTheme {
         backgroundColor: colorScheme.surfaceContainerLow,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: AppTypography.labelSmall.copyWith(color: colorScheme.onSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
         side: BorderSide.none,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSpacing.cardRadius + 4),
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.topXl),
         backgroundColor: colorScheme.surface,
       ),
     );
@@ -142,11 +135,16 @@ class AppTheme {
       secondary: const Color(0xFF8FAFC4),
       onSecondary: AppColors.secondary,
       surface: AppColors.darkSurface,
-      onSurface: const Color(0xFFE8E6E1),
+      onSurface: AppNeutrals.dn50,
+      onSurfaceVariant: AppNeutrals.dn100,
+      outline: AppNeutrals.dn400,
+      outlineVariant: AppNeutrals.dn500,
       error: const Color(0xFFFF8A80),
       surfaceContainerLowest: AppColors.darkBackground,
       surfaceContainerLow: AppColors.darkSurfaceVariant,
       surfaceContainer: AppColors.darkSurface,
+      surfaceContainerHigh: AppNeutrals.dn500,
+      shadow: Colors.black,
     );
 
     return ThemeData(
@@ -160,9 +158,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allLg),
         margin: EdgeInsets.zero,
       ),
       appBarTheme: AppBarTheme(
@@ -192,18 +188,14 @@ class AppTheme {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius + 4),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allLg),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.allMd),
           textStyle: AppTypography.titleMedium.copyWith(
             color: colorScheme.onPrimary,
           ),
@@ -217,20 +209,20 @@ class AppTheme {
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputRadius),
+          borderRadius: AppRadius.allMd,
           borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.surfaceContainerLow,
+        color: colorScheme.outlineVariant,
         thickness: 1,
         space: 0,
       ),
@@ -238,17 +230,11 @@ class AppTheme {
         backgroundColor: colorScheme.surfaceContainerLow,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: AppTypography.labelSmall.copyWith(color: colorScheme.onSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.chipRadius),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.allSm),
         side: BorderSide.none,
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSpacing.cardRadius + 4),
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.topXl),
         backgroundColor: colorScheme.surface,
       ),
     );

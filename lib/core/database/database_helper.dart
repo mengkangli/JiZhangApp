@@ -222,6 +222,16 @@ class DatabaseHelper {
       if (wherePart != null) {
         filtered = _filterRows(filtered, wherePart, args);
       }
+      final groupBy = _extractGroupBy(sql);
+      if (groupBy != null) {
+        final sums = <String, double>{};
+        for (final row in filtered) {
+          final key = row[groupBy]?.toString();
+          if (key == null) continue;
+          sums[key] = (sums[key] ?? 0) + ((row[sumCol] as num?)?.toDouble() ?? 0);
+        }
+        return sums.entries.map((entry) => {groupBy: entry.key, 'total': entry.value}).toList();
+      }
       final sum = filtered.fold<double>(0, (s, r) => s + ((r[sumCol] as num?)?.toDouble() ?? 0));
       return [{'total': sum}];
     }
@@ -240,28 +250,35 @@ class DatabaseHelper {
     var wherePart = sql.substring(idx + 5);
     final orderIdx = wherePart.toUpperCase().indexOf('ORDER BY');
     if (orderIdx >= 0) wherePart = wherePart.substring(0, orderIdx);
+    final groupIdx = wherePart.toUpperCase().indexOf('GROUP BY');
+    if (groupIdx >= 0) wherePart = wherePart.substring(0, groupIdx);
     return wherePart.trim();
   }
 
-  int _insertWeb(String table, Map<String, dynamic> row) {
+  String? _extractGroupBy(String sql) {
+    final match = RegExp(r'GROUP\s+BY\s+(\w+)', caseSensitive: false).firstMatch(sql);
+    return match?.group(1);
+  }
+
+  Future<int> _insertWeb(String table, Map<String, dynamic> row) async {
     final rows = _readTable(table);
     rows.add(row);
-    _writeTable(table, rows);
+    await _writeTable(table, rows);
     return 1;
   }
 
-  int _updateWeb(String table, Map<String, dynamic> row) {
+  Future<int> _updateWeb(String table, Map<String, dynamic> row) async {
     final rows = _readTable(table);
     final idx = rows.indexWhere((r) => r['id'] == row['id']);
     if (idx >= 0) {
       rows[idx] = row;
-      _writeTable(table, rows);
+      await _writeTable(table, rows);
       return 1;
     }
     return 0;
   }
 
-  int _deleteWeb(String table, {String? where, List<dynamic>? whereArgs}) {
+  Future<int> _deleteWeb(String table, {String? where, List<dynamic>? whereArgs}) async {
     var rows = _readTable(table);
     final before = rows.length;
     if (where != null && whereArgs != null) {
@@ -269,10 +286,10 @@ class DatabaseHelper {
       final toRemove = rows.map((r) => r['id']).toSet();
       final all = _readTable(table);
       all.removeWhere((r) => toRemove.contains(r['id']));
-      _writeTable(table, all);
+      await _writeTable(table, all);
       return before - all.length;
     }
-    _writeTable(table, rows);
+    await _writeTable(table, rows);
     return 0;
   }
 
