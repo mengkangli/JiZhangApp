@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:jizhang/core/router/app_router.dart';
+import 'package:apurse/core/router/app_router.dart';
 
 /// Cheap smoke test — just verifies the router instantiates and exposes
 /// the four expected top-level branches. Full widget tests require the

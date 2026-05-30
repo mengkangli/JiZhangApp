@@ -1,9 +1,11 @@
 import '../../../core/database/database_constants.dart';
 import '../../../core/database/database_helper.dart';
+import '../../budget/domain/budget_repository.dart';
 import 'transaction.dart';
 
 class TransactionRepository {
   final _db = DatabaseHelper.instance;
+  final _budgetRepo = BudgetRepository();
 
   Future<List<Transaction>> getAll() async {
     final rows = await _db.query(
@@ -81,22 +83,75 @@ class TransactionRepository {
 
   Future<void> insert(Transaction tx) async {
     await _db.insert(DatabaseConstants.tableTransactions, tx.toJson());
+    if (!tx.isIncome) {
+      await _budgetRepo.recalculateSpent(
+        categoryId: tx.categoryId,
+        year: tx.date.year,
+        month: tx.date.month,
+      );
+    }
   }
 
   Future<void> update(Transaction tx) async {
+    // Fetch old record to check type/category changes
+    final oldRows = await _db.query(
+      DatabaseConstants.tableTransactions,
+      where: 'id = ?',
+      whereArgs: [tx.id],
+    );
+    final oldTx = oldRows.isNotEmpty ? Transaction.fromJson(oldRows.first) : null;
+
     await _db.update(
       DatabaseConstants.tableTransactions,
       tx.toJson(),
       where: 'id = ?',
       whereArgs: [tx.id],
     );
+
+    // Recalculate budgets that may have been affected
+    if (!tx.isIncome) {
+      await _budgetRepo.recalculateSpent(
+        categoryId: tx.categoryId,
+        year: tx.date.year,
+        month: tx.date.month,
+      );
+    }
+    // If old transaction was expense and category/month changed, update old budget too
+    if (oldTx != null && !oldTx.isIncome) {
+      if (oldTx.categoryId != tx.categoryId ||
+          oldTx.date.year != tx.date.year ||
+          oldTx.date.month != tx.date.month) {
+        await _budgetRepo.recalculateSpent(
+          categoryId: oldTx.categoryId,
+          year: oldTx.date.year,
+          month: oldTx.date.month,
+        );
+      }
+    }
   }
 
   Future<void> delete(String id) async {
+    // Fetch before deleting so we know which budget to recalculate
+    final rows = await _db.query(
+      DatabaseConstants.tableTransactions,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    Transaction? tx;
+    if (rows.isNotEmpty) tx = Transaction.fromJson(rows.first);
+
     await _db.delete(
       DatabaseConstants.tableTransactions,
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    if (tx != null && !tx.isIncome) {
+      await _budgetRepo.recalculateSpent(
+        categoryId: tx.categoryId,
+        year: tx.date.year,
+        month: tx.date.month,
+      );
+    }
   }
 }

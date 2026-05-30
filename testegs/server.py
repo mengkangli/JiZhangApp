@@ -1,5 +1,5 @@
 """
-qianji remote database server
+Apurse remote database server
 Run: python server.py
 Default: http://localhost:8080
 """
@@ -7,7 +7,7 @@ import sqlite3, json, os
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-DB = os.path.join(os.path.dirname(__file__), 'qianji_remote.db')
+DB = os.path.join(os.path.dirname(__file__), 'apurse_remote.db')
 
 def get_db():
     conn = sqlite3.connect(DB)

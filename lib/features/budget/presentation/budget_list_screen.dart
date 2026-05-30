@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/widgets/shell_tab_scaffold.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/category_icon.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../shared/providers/selected_month_provider.dart';
-import '../../category/domain/category.dart';
 import '../../category/domain/category_repository.dart';
 import '../domain/budget.dart';
 import '../domain/budget_repository.dart';
@@ -45,36 +43,38 @@ class BudgetListScreen extends ConsumerWidget {
     final progressAsync = ref.watch(budgetProgressListProvider);
     final colorScheme = Theme.of(context).colorScheme;
 
-    return ShellTabScaffold.simple(
-      title: DateFormat('yyyy年M月', 'zh_CN').format(month),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.add_rounded),
-          tooltip: '添加预算',
-          onPressed: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AddBudgetScreen()),
-            );
-            ref.invalidate(budgetProgressListProvider);
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_left_rounded),
-          onPressed: () {
-            ref
-                .read(selectedMonthProvider.notifier)
-                .update((state) => DateTime(state.year, state.month - 1));
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right_rounded),
-          onPressed: () {
-            ref
-                .read(selectedMonthProvider.notifier)
-                .update((state) => DateTime(state.year, state.month + 1));
-          },
-        ),
-      ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(DateFormat('yyyy年M月', 'zh_CN').format(month)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            tooltip: '添加预算',
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddBudgetScreen()),
+              );
+              ref.invalidate(budgetProgressListProvider);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded),
+            onPressed: () {
+              ref
+                  .read(selectedMonthProvider.notifier)
+                  .update((state) => DateTime(state.year, state.month - 1));
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded),
+            onPressed: () {
+              ref
+                  .read(selectedMonthProvider.notifier)
+                  .update((state) => DateTime(state.year, state.month + 1));
+            },
+          ),
+        ],
+      ),
       body: progressAsync.when(
         data: (progressList) {
           if (progressList.isEmpty) {
@@ -162,7 +162,6 @@ class BudgetListScreen extends ConsumerWidget {
     BudgetProgress progress,
     WidgetRef ref,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
     final budget = progress.budget;
     final pct = budget.percentage / 100;
     final color = Color(progress.categoryColorValue);

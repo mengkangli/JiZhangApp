@@ -26,7 +26,7 @@ load_env()
 API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 if not API_KEY:
     raise RuntimeError("DEEPSEEK_API_KEY not set in .env file")
-IMAGE_PATH = r"C:\Users\mengk\Desktop\qianjirepro\testegs\meituanpay.jpg"
+IMAGE_PATH = os.path.join(os.path.dirname(__file__), "meituanpay.jpg")
 
 # ═══════════════════════════════════════════════
 #  Step 1: OCR (google_mlkit_text_recognition on phone)
@@ -118,7 +118,7 @@ type_cn = "支出" if parsed["type"] == "expense" else "收入"
 print(f"""
   ┌───────────────────────────────────────────
   │
-  │   📱 钱记 — 智能记账结果
+  │   📱 Apurse — 智能记账结果
   │
   │   金额:   ¥{parsed['amount']}
   │   类型:   {type_cn}
@@ -150,7 +150,7 @@ result = {
     }
 }
 
-output_path = r"C:\Users\mengk\Desktop\qianjirepro\testegs\pipeline_result.json"
+output_path = os.path.join(os.path.dirname(__file__), "pipeline_result.json")
 with open(output_path, "w", encoding="utf-8") as f:
     json.dump(result, f, ensure_ascii=False, indent=2)
 

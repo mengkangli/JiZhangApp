@@ -7,7 +7,7 @@ from paddleocr import PaddleOCR
 print("Initializing OCR engine (Chinese + English)...")
 ocr = PaddleOCR(lang='ch')
 
-img = r"C:\Users\mengk\Desktop\qianjirepro\testegs\meituanpay.jpg"
+img = os.path.join(os.path.dirname(__file__), "meituanpay.jpg")
 print(f"Running OCR on: {img}")
 print()
 
@@ -36,7 +36,7 @@ full = ' '.join(all_text)
 print(f"  {full}")
 
 # Save to file for pipeline
-with open(r"C:\Users\mengk\Desktop\qianjirepro\testegs\ocr_output.txt", "w", encoding="utf-8") as f:
+with open(os.path.join(os.path.dirname(__file__), "ocr_output.txt"), "w", encoding="utf-8") as f:
     f.write(full)
 
 print()

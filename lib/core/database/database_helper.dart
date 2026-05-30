@@ -186,7 +186,9 @@ class DatabaseHelper {
           if (rv == null) return false;
           if (rv is num && whereArgs[idx] is num) {
             if (rv < (whereArgs[idx] as num)) return false;
-          } else if (rv.toString().compareTo(whereArgs[idx].toString()) < 0) return false;
+          } else if (rv.toString().compareTo(whereArgs[idx].toString()) < 0) {
+            return false;
+          }
           idx++;
         } else if (col.endsWith('<=')) {
           final colName = col.substring(0, col.length - 2).trim();
@@ -195,7 +197,9 @@ class DatabaseHelper {
           if (rv == null) return false;
           if (rv is num && whereArgs[idx] is num) {
             if (rv > (whereArgs[idx] as num)) return false;
-          } else if (rv.toString().compareTo(whereArgs[idx].toString()) > 0) return false;
+          } else if (rv.toString().compareTo(whereArgs[idx].toString()) > 0) {
+            return false;
+          }
           idx++;
         }
       }
@@ -207,7 +211,7 @@ class DatabaseHelper {
     if (a == null && b == null) return 0;
     if (a == null) return 1;
     if (b == null) return -1;
-    final cmp = a is num ? (a as num).compareTo(b as num) : a.toString().compareTo(b.toString());
+    final cmp = a is num ? a.compareTo(b as num) : a.toString().compareTo(b.toString());
     return desc ? -cmp : cmp;
   }
 

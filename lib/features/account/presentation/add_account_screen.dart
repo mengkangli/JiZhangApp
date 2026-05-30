@@ -92,8 +92,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(title: Text(_isEditing ? '编辑账户' : '添加账户')),
       body: SingleChildScrollView(

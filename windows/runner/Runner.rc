@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.jizhang.app" "\0"
-            VALUE "FileDescription", "JiZhang" "\0"
+            VALUE "CompanyName", "com.apurse.app" "\0"
+            VALUE "FileDescription", "Apurse" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "JiZhang" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.jizhang.app. All rights reserved." "\0"
-            VALUE "OriginalFilename", "JiZhang.exe" "\0"
-            VALUE "ProductName", "JiZhang" "\0"
+            VALUE "InternalName", "Apurse" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.apurse.app. All rights reserved." "\0"
+            VALUE "OriginalFilename", "Apurse.exe" "\0"
+            VALUE "ProductName", "Apurse" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

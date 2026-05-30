@@ -26,7 +26,7 @@ import UIKit
             return
         }
         let messenger = registrar.messenger()
-        let channel = FlutterMethodChannel(name: "com.jizhang.app/share", binaryMessenger: messenger)
+        let channel = FlutterMethodChannel(name: "com.apurse.app/share", binaryMessenger: messenger)
         channel.setMethodCallHandler { (call, result) in
             if call.method == "getSharedImage" {
                 let path = AppDelegate.pendingSharePath

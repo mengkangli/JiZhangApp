@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:uuid/uuid.dart';
 
 /// Platform-agnostic key-value storage. Uses IndexedDB/localStorage on web,
 /// and a simple SQLite table on native platforms.
@@ -14,7 +13,7 @@ class PlatformStorage {
   static Future<void> init() async {
     if (!kIsWeb) {
       final dbPath = await getDatabasesPath();
-      final path = join(dbPath, 'jizhang_store.db');
+      final path = join(dbPath, 'apurse_store.db');
       final db = await openDatabase(
         path,
         version: 1,
@@ -85,7 +84,6 @@ class SimpleDb {
   SimpleDb._();
 
   static final _data = <String, List<Map<String, dynamic>>>{};
-  static const _uuid = Uuid();
 
   static void initTables() {
     _data['categories'] = [];

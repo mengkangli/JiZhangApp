@@ -88,8 +88,6 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('添加账单'),

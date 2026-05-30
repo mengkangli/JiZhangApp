@@ -14,7 +14,7 @@ build/
 *.jwk
 .DS_Store
 Thumbs.db
-jizhang_remote.db
+apurse_remote.db
 testegs/emulator_current.png
 testegs/drawer.png
 testegs/screen*.png

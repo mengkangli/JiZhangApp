@@ -68,7 +68,7 @@ parsed = json.loads(content)
 type_cn = "expense" if parsed["type"] == "expense" else "income"
 
 # Save full result
-with open("C:/Users/mengk/Desktop/qianjirepro/testegs/pipeline_result.json", "w", encoding="utf-8") as f:
+with open(os.path.join(os.path.dirname(__file__), "pipeline_result.json"), "w", encoding="utf-8") as f:
     json.dump({
         "ocr_text": text,
         "model": model,

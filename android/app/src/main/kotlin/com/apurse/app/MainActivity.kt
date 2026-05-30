@@ -1,4 +1,4 @@
-package com.jizhang.app
+package com.apurse.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,7 +10,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.jizhang.app/share"
+    private val CHANNEL = "com.apurse.app/share"
     private var pendingSharePath: String? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

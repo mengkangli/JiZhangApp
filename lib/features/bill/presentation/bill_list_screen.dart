@@ -182,7 +182,7 @@ class BillListScreen extends ConsumerWidget {
             else ...[
               AppSpacing.gapSm,
               IconButton(
-                icon: Icon(Icons.check_circle_outline,
+                icon: const Icon(Icons.check_circle_outline,
                     color: AppColors.income, size: 22),
                 onPressed: () async {
                   try {

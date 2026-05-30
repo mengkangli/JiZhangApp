@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/shell_tab_scaffold.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/app_icon_data.dart';
 import '../../../core/widgets/empty_state.dart';
@@ -29,11 +27,12 @@ class _AccountListScreenState extends State<AccountListScreen> {
     setState(() => _loading = true);
     try {
       final accounts = await AccountRepository().getAll();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _accounts = accounts;
           _loading = false;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -46,27 +45,29 @@ class _AccountListScreenState extends State<AccountListScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return ShellTabScaffold.simple(
-      title: '账户',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.add_rounded),
-          tooltip: '添加账户',
-          onPressed: () async {
-            final result = await Navigator.of(context).push<bool>(
-              MaterialPageRoute(builder: (_) => const AddAccountScreen()),
-            );
-            if (result == true) _load();
-          },
-        ),
-      ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('账户'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            tooltip: '添加账户',
+            onPressed: () async {
+              final result = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(builder: (_) => const AddAccountScreen()),
+              );
+              if (result == true) _load();
+            },
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _accounts.isEmpty
-              ? EmptyState(
+              ? const EmptyState(
                   icon: Icons.account_balance_wallet_outlined,
                   title: '暂无账户',
-                  subtitle: '点击右下角按钮添加账户',
+                  subtitle: '点击右上角 + 按钮添加账户',
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

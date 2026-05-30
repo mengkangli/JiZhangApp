@@ -177,13 +177,13 @@ class _ExportScreenState extends State<ExportScreen> {
 
       final dir = await getTemporaryDirectory();
       final timeStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final file = File('${dir.path}/jizhang_export_$timeStr.csv');
+      final file = File('${dir.path}/apurse_export_$timeStr.csv');
       await file.writeAsString(csv);
 
       try {
         await Share.shareXFiles(
           [XFile(file.path)],
-          subject: '钱记账单导出 $timeStr',
+          subject: 'Apurse账单导出 $timeStr',
         );
       } catch (_) {
         // User cancelled share — file was written successfully, not an error

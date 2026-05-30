@@ -5,15 +5,15 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/providers/theme_mode_provider.dart';
 
-class JiZhangApp extends ConsumerWidget {
-  const JiZhangApp({super.key});
+class ApurseApp extends ConsumerWidget {
+  const ApurseApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: '钱记',
+      title: 'Apurse',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

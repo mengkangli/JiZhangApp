@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'storage_config.dart';
 
 class ApiClient {
   final String baseUrl;
@@ -49,7 +48,7 @@ class ApiClient {
   }
 
   Future<int> insert(String table, Map<String, dynamic> row) async {
-    final resp = await http.post(
+    await http.post(
       Uri.parse('$baseUrl/insert'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'table': table, 'row': row}),

@@ -24,7 +24,7 @@ class Bill {
   });
 
   /// The actual due date this month (or next month if passed), clamped to valid days.
-  DateTime get _currentDueDate {
+  DateTime get currentDueDate {
     final now = DateTime.now();
     int day = dueDay.clamp(1, _daysInMonth(now.year, now.month));
     DateTime due = DateTime(now.year, now.month, day);
@@ -144,11 +144,11 @@ class DateOnly implements Comparable<DateOnly> {
   }
 
   int difference(DateOnly other) {
-    return this.toDateTime().difference(other.toDateTime()).inDays;
+    return toDateTime().difference(other.toDateTime()).inDays;
   }
 
   int daysSince(DateOnly other) {
-    return other.toDateTime().difference(this.toDateTime()).inDays;
+    return other.toDateTime().difference(toDateTime()).inDays;
   }
 
   DateTime toDateTime() => DateTime(year, month, day);

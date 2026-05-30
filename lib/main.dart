@@ -15,7 +15,7 @@ void main() async {
   ShareHandler.init();
   runApp(
     const ProviderScope(
-      child: JiZhangApp(),
+      child: ApurseApp(),
     ),
   );
 }

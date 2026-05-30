@@ -20,10 +20,8 @@ class AddBudgetScreen extends ConsumerStatefulWidget {
 
 class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
   String? _categoryId;
-  Category? _selectedCategory;
   final _amountController = TextEditingController();
   final _uuid = const Uuid();
-  bool _loadingCategories = true;
 
   @override
   void dispose() {
@@ -120,7 +118,6 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
                       onSelected: (_) {
                         setState(() {
                           _categoryId = cat.id;
-                          _selectedCategory = cat;
                         });
                       },
                     );
